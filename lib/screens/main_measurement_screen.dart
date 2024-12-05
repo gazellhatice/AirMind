@@ -27,18 +27,8 @@ class MainMeasurementScreen extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.nature), label: "Nature"),
-          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: "Alerts"),
-        ],
-        onTap: (index) {
-          if (index == 2) {
-            Navigator.pushNamed(context, '/active_generators');
-          }
-        },
-      ),
+      // Alt navigasyonu kaldırıyoruz.
+      bottomNavigationBar: null, // Alt navigasyon burada kaldırıldı.
     );
   }
 }

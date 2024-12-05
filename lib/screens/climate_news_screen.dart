@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-// İklim haberlerini çeken sınıf
 class ClimateNewsScreen extends StatefulWidget {
   @override
   _ClimateNewsScreenState createState() => _ClimateNewsScreenState();
@@ -11,6 +10,7 @@ class ClimateNewsScreen extends StatefulWidget {
 class _ClimateNewsScreenState extends State<ClimateNewsScreen> {
   List<dynamic> _news = [];
   bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -18,17 +18,31 @@ class _ClimateNewsScreenState extends State<ClimateNewsScreen> {
     _fetchNews();
   }
 
-  // API'den haberleri çekmek
   Future<void> _fetchNews() async {
-    final response = await http.get(Uri.parse('https://api.yournewsapi.com/climate-news'));
+    final String apiUrl =
+        'https://newsapi.org/v2/everything?q=climate&apiKey=18c90630cae94cb0ac0158496f86e9fa';
 
-    if (response.statusCode == 200) {
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> newsData = json.decode(response.body);
+
+        setState(() {
+          _news = newsData['articles'] ?? []; // Haberler 'articles' anahtarında
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = 'Failed to load news. Status code: ${response.statusCode}';
+          _isLoading = false;
+        });
+      }
+    } catch (error) {
       setState(() {
-        _news = json.decode(response.body);
+        _errorMessage = 'An error occurred: $error';
         _isLoading = false;
       });
-    } else {
-      throw Exception('Failed to load climate news');
     }
   }
 
@@ -40,6 +54,13 @@ class _ClimateNewsScreenState extends State<ClimateNewsScreen> {
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
+          : _errorMessage != null
+          ? Center(
+        child: Text(
+          _errorMessage!,
+          style: TextStyle(color: Colors.red),
+        ),
+      )
           : ListView.builder(
         itemCount: _news.length,
         itemBuilder: (context, index) {
@@ -47,10 +68,29 @@ class _ClimateNewsScreenState extends State<ClimateNewsScreen> {
           return Card(
             margin: EdgeInsets.all(8.0),
             child: ListTile(
-              title: Text(newsItem['title']),
-              subtitle: Text(newsItem['description']),
+              title: Text(newsItem['title'] ?? 'No Title'),
+              subtitle: Text(
+                newsItem['description'] ?? 'No Description',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
               onTap: () {
-                // Burada haberin detaylarına yönlendirebilirsiniz
+                // Haber detayına gitmek için URL'yi açabilirsiniz
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(newsItem['title'] ?? 'No Title'),
+                    content: Text(newsItem['content'] ?? 'No Content'),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: Text('Close'),
+                      ),
+                    ],
+                  ),
+                );
               },
             ),
           );
